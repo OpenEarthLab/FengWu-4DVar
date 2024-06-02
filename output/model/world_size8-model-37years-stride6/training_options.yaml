@@ -1,0 +1,152 @@
+resume: false
+resume_from_config: false
+seed: 0
+cuda: 0
+world_size: 8
+per_cpus: 4
+init_method: tcp://10.140.24.122:33544
+outdir: /mnt/petrelfs/xiaoyi/projects/fengwu-lite/output/model
+tbdir: /mnt/petrelfs/xiaoyi/projects/fengwu-lite/runs
+cfg: ./configs/model.yaml
+desc: model-37years-stride6-circle
+rank: 0
+local_rank: 0
+distributed: true
+dist_backend: nccl
+relative_checkpoint_dir: model/world_size8-model-37years-stride6-circle
+era5_npy:
+  type: weather_dataset
+  data_dir: s3://era5_np128x256
+  length: 2
+  file_stride: 6
+  sample_stride: 1
+  vnames: &id001
+    constants: []
+    single_level_vnames:
+    - u10
+    - v10
+    - t2m
+    - msl
+    multi_level_vnames:
+    - z
+    - q
+    - u
+    - v
+    - t
+    hight_level_list:
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 400
+    - 500
+    - 600
+    - 700
+    - 850
+    - 925
+    - 1000
+model:
+  type: LGUnet_all
+  network_params:
+    img_size:
+    - 128
+    - 256
+    patch_size:
+    - 2
+    - 2
+    stride:
+    - 2
+    - 2
+    inchans_list:
+    - 4
+    - 13
+    - 13
+    - 13
+    - 13
+    - 13
+    outchans_list:
+    - 8
+    - 26
+    - 26
+    - 26
+    - 26
+    - 26
+    in_chans: 138
+    out_chans: 138
+    enc_dim: 96
+    embed_dim: 1152
+    window_size: 4
+    enc_depths:
+    - 2
+    - 2
+    enc_heads:
+    - 3
+    - 6
+    lg_depths:
+    - 4
+    - 4
+    - 4
+    lg_heads:
+    - 6
+    - 6
+    - 6
+    Weather_T: 1
+    drop_path: 0.0
+    use_checkpoint: false
+    inp_length: 1
+    use_mlp: false
+  metrics_list:
+  - MAE
+  - MSE
+  save_best: Possloss
+  extra_params:
+    loss_type: Possloss
+  optimizer_params:
+    type: AdamW
+    params:
+      lr: 0.0005
+      betas:
+      - 0.9
+      - 0.9
+  lr_params:
+    by_step: true
+    sched: cosine
+    epochs: 50
+    min_lr: 0.0
+    warmup_lr: 1.0e-08
+    warmup_epochs: 0
+    lr_noise: null
+    cooldown_epochs: 0
+dataset:
+  train:
+    type: weather_dataset
+    data_dir: s3://era5_np128x256
+    length: 2
+    file_stride: 6
+    sample_stride: 1
+    vnames: *id001
+  test:
+    type: weather_dataset
+    data_dir: s3://era5_np128x256
+    length: 2
+    file_stride: 6
+    sample_stride: 1
+    vnames: *id001
+  getsample:
+    type: weather_dataset
+    data_dir: s3://era5_np128x256
+    length: 6
+    file_stride: 1
+    sample_stride: 1
+    vnames: *id001
+dataloader:
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+  persistent_workers: true
+trainer:
+  batch_size: 4
+  test_batch_size: 1
+  max_epoch: 50
